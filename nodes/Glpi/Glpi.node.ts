@@ -1,9 +1,11 @@
-import { 
-  INodeType, 
-  INodeTypeDescription, 
-  IExecuteFunctions, 
-  INodeExecutionData, 
-  IHttpRequestOptions 
+import {
+  INodeType,
+  INodeTypeDescription,
+  IExecuteFunctions,
+  INodeExecutionData,
+  IHttpRequestOptions,
+  NodeApiError,
+  IDataObject,
 } from 'n8n-workflow';
 import { N8NPropertiesBuilder, N8NPropertiesBuilderConfig } from '@devlikeapro/n8n-openapi-node';
 import * as doc from './openapi.json';
@@ -88,7 +90,10 @@ export class Glpi implements INodeType {
         const sessionResponse = await this.helpers.httpRequest(initSessionOptions);
         sessionToken = sessionResponse.session_token;
       } catch (error) {
-        throw new Error(`Failed to initialize GLPI session: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new NodeApiError(this.getNode(), {
+          message: `Failed to initialize GLPI session: ${errorMessage}`,
+        });
       }
     }
 
@@ -112,21 +117,23 @@ export class Glpi implements INodeType {
 
         // Map operations to HTTP methods and endpoints
         switch (operation) {
-          case 'create':
+          case 'create': {
             method = 'POST';
             url += `/${resource}`;
             // Get all the input fields for creation
-            const createFields = this.getNodeParameter('additionalFields', i, {}) as any;
+            const createFields = this.getNodeParameter('additionalFields', i, {}) as IDataObject;
             body = { input: createFields };
             break;
-          
-          case 'get':
+          }
+
+          case 'get': {
             method = 'GET';
             const getId = this.getNodeParameter('id', i) as string;
             url += `/${resource}/${getId}`;
             break;
-          
-          case 'getAll':
+          }
+
+          case 'getAll': {
             method = 'GET';
             url += `/${resource}`;
             // Add range parameter if specified
@@ -135,16 +142,18 @@ export class Glpi implements INodeType {
               requestOptions.headers!['Range'] = range;
             }
             break;
-          
-          case 'update':
+          }
+
+          case 'update': {
             method = 'PUT';
             const updateId = this.getNodeParameter('id', i) as string;
             url += `/${resource}/${updateId}`;
-            const updateFields = this.getNodeParameter('updateFields', i, {}) as any;
+            const updateFields = this.getNodeParameter('updateFields', i, {}) as IDataObject;
             body = { input: updateFields };
             break;
-          
-          case 'delete':
+          }
+
+          case 'delete': {
             method = 'DELETE';
             const deleteId = this.getNodeParameter('id', i) as string;
             url += `/${resource}/${deleteId}`;
@@ -153,23 +162,25 @@ export class Glpi implements INodeType {
               url += '?force_purge=true';
             }
             break;
-          
-          case 'search':
+          }
+
+          case 'search': {
             method = 'GET';
             url += `/search/${resource}`;
             // Add search criteria
-            const searchCriteria = this.getNodeParameter('searchCriteria', i, {}) as any;
+            const searchCriteria = this.getNodeParameter('searchCriteria', i, {}) as IDataObject;
             if (searchCriteria) {
               const queryParams: string[] = [];
-              Object.keys(searchCriteria).forEach(key => {
-                queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(searchCriteria[key])}`);
+              Object.keys(searchCriteria).forEach((key) => {
+                queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(searchCriteria[key] as string)}`);
               });
               url += `?${queryParams.join('&')}`;
             }
             break;
+          }
         }
 
-        requestOptions.method = method as any;
+        requestOptions.method = method as 'GET' | 'POST' | 'PUT' | 'DELETE';
         requestOptions.url = url;
         
         if (method !== 'GET' && method !== 'DELETE') {
@@ -213,7 +224,7 @@ export class Glpi implements INodeType {
           },
         });
       }
-    } catch (error) {
+    } catch {
       // Silently ignore session cleanup errors
     }
 
