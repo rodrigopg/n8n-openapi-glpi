@@ -52,7 +52,7 @@ export class Glpi implements INodeType {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      baseURL: '={{$credentials.url}}/api.php/v2',
+      baseURL: '={{$credentials.url}}/api.php',
     },
     properties: properties,
 		usableAsTool: true, // Use the auto-generated properties from OpenAPI spec

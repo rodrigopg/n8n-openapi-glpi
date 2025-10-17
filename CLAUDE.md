@@ -40,7 +40,7 @@ The node's `execute()` method in `Glpi.node.ts`:
 3. The OpenAPI spec defines all endpoints and operations
 4. Request building is handled by the n8n framework based on the OpenAPI spec
 
-**Important**: The base URL is set in `requestDefaults.baseURL` as `={{$credentials.url}}/api.php/v2`
+**Important**: The base URL is set in `requestDefaults.baseURL` as `={{$credentials.url}}/api.php`
 
 ## Development Commands
 
@@ -116,7 +116,7 @@ dist/                       # Compiled output (git-ignored)
 
 GLPI 11 High-Level API uses a different structure than the legacy API:
 
-- Base URL: `/api.php/v2`
+- Base URL: `/api.php`
 - Resources are under `/Assets/` (e.g., `/Assets/Computer`, `/Assets/Ticket`)
 - RESTful design with standard HTTP methods (GET, POST, PATCH, PUT, DELETE)
 - OAuth2 authentication via `/api.php/token` endpoint
@@ -158,7 +158,7 @@ For GLPI 10.1+, you can fetch the latest OpenAPI spec from your instance:
 
 ### API Endpoints
 
-Base: `{glpi_url}/api.php/v2`
+Base: `{glpi_url}/api.php`
 
 - `/` - API root endpoint
 - `/doc` - API documentation (HTML)

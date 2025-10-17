@@ -27,7 +27,7 @@ GLPI is a comprehensive IT management suite that helps organizations manage thei
 **Breaking Changes from 0.1.x:**
 - Requires GLPI 11+
 - OAuth2 authentication (no more session tokens)
-- Different API base URL (`/api.php/v2` instead of `/apirest.php`)
+- Different API base URL (`/api.php` instead of `/apirest.php`)
 
 ## Prerequisites
 
@@ -237,17 +237,17 @@ Get all computers from your GLPI inventory:
 
 ### Base URL Structure
 
-All API requests use the base URL: `{your-glpi-url}/api.php/v2`
+All API requests use the base URL: `{your-glpi-url}/api.php`
 
 For example:
-- `http://localhost/api.php/v2/Assets/Computer`
-- `https://glpi.example.com/api.php/v2/Assistance/Ticket`
+- `http://localhost/api.php/Assets/Computer`
+- `https://glpi.example.com/api.php/Assistance/Ticket`
 
 ### OpenAPI Specification
 
 The complete API specification can be accessed from your GLPI instance:
 
-- **Documentation**: `{your-glpi-url}/api.php/v2/doc`
+- **Documentation**: `{your-glpi-url}/api.php/doc`
 - **OpenAPI JSON**: `{your-glpi-url}/api.php/doc.json`
 
 ### Authentication Endpoints
