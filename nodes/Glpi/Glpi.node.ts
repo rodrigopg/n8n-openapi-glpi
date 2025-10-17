@@ -4,6 +4,7 @@ import {
   IExecuteFunctions,
   INodeExecutionData,
   IHttpRequestOptions,
+  IDataObject,
 } from 'n8n-workflow';
 import { N8NPropertiesBuilder, N8NPropertiesBuilderConfig } from '@devlikeapro/n8n-openapi-node';
 import * as doc from './openapi.json';
@@ -15,10 +16,8 @@ import * as doc from './openapi.json';
  */
 
 // Configuration for the OpenAPI properties builder
-// This allows us to customize how the properties are generated from the OpenAPI spec
 const config: N8NPropertiesBuilderConfig = {
   // We can add custom configuration here if needed
-  // For example, to filter out certain operations or customize field display
 };
 
 // Create the properties builder instance with our OpenAPI document
@@ -52,29 +51,89 @@ export class Glpi implements INodeType {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      baseURL: '={{$credentials.url}}/api.php',
+      baseURL: '={{$credentials.glpiUrl}}/api.php',
     },
     properties: properties,
-		usableAsTool: true, // Use the auto-generated properties from OpenAPI spec
+		usableAsTool: true,
   };
 
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-    // GLPI 11 uses OAuth2 authentication which is handled by n8n's credential system
-    // The OpenAPI spec defines all endpoints and the node properties are auto-generated
-    // This execute method delegates to the httpRequestWithAuthentication helper
-
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
+    const credentials = await this.getCredentials('glpiApi');
 
-    // Process each input item
     for (let i = 0; i < items.length; i++) {
       try {
-        // The operation parameters are dynamically generated from the OpenAPI spec
-        // We use httpRequestWithAuthentication which handles OAuth2 automatically
+        // Get the parameters from the OpenAPI-generated properties
+        const resource = this.getNodeParameter('resource', i) as string;
+        const operation = this.getNodeParameter('operation', i) as string;
+
+        // Build the request options
+        const requestOptions: IHttpRequestOptions = {
+          method: 'GET',
+          url: `${credentials.glpiUrl}/api.php${resource}`,
+          headers: {
+            'Accept': 'application/json',
+          },
+        };
+
+        // Determine HTTP method based on operation
+        if (operation.includes('create') || operation.includes('post') || operation === 'POST') {
+          requestOptions.method = 'POST';
+          requestOptions.headers!['Content-Type'] = 'application/json';
+
+          // Get body parameters if they exist
+          try {
+            const bodyParameters = this.getNodeParameter('requestBody', i, {}) as IDataObject;
+            if (Object.keys(bodyParameters).length > 0) {
+              requestOptions.body = bodyParameters;
+            }
+          } catch (error) {
+            // requestBody parameter might not exist for all operations
+          }
+        } else if (operation.includes('update') || operation.includes('patch') || operation === 'PATCH') {
+          requestOptions.method = 'PATCH';
+          requestOptions.headers!['Content-Type'] = 'application/json';
+
+          try {
+            const bodyParameters = this.getNodeParameter('requestBody', i, {}) as IDataObject;
+            if (Object.keys(bodyParameters).length > 0) {
+              requestOptions.body = bodyParameters;
+            }
+          } catch (error) {
+            // requestBody parameter might not exist
+          }
+        } else if (operation.includes('delete') || operation === 'DELETE') {
+          requestOptions.method = 'DELETE';
+        } else if (operation.includes('put') || operation === 'PUT') {
+          requestOptions.method = 'PUT';
+          requestOptions.headers!['Content-Type'] = 'application/json';
+
+          try {
+            const bodyParameters = this.getNodeParameter('requestBody', i, {}) as IDataObject;
+            if (Object.keys(bodyParameters).length > 0) {
+              requestOptions.body = bodyParameters;
+            }
+          } catch (error) {
+            // requestBody parameter might not exist
+          }
+        }
+
+        // Add query parameters if they exist
+        try {
+          const queryParameters = this.getNodeParameter('queryParameters', i, {}) as IDataObject;
+          if (Object.keys(queryParameters).length > 0) {
+            requestOptions.qs = queryParameters;
+          }
+        } catch (error) {
+          // queryParameters might not exist for all operations
+        }
+
+        // Execute the request with OAuth2 authentication
         const response = await this.helpers.httpRequestWithAuthentication.call(
           this,
           'glpiApi',
-          {} as IHttpRequestOptions,
+          requestOptions,
         );
 
         // Handle the response
@@ -84,7 +143,6 @@ export class Glpi implements INodeType {
           returnData.push({ json: response });
         }
       } catch (error) {
-        // Handle errors
         if (this.continueOnFail()) {
           returnData.push({
             json: {
