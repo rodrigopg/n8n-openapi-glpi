@@ -1,247 +1,384 @@
-![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
+# n8n-nodes-glpi
 
-# n8n-nodes-starter
+This is an n8n community node that provides integration with [GLPI](https://glpi-project.org/) (Gestionnaire Libre de Parc Informatique), a powerful open-source IT Asset Management, issue tracking system, and service desk solution.
 
-This starter repository helps you build custom integrations for [n8n](https://n8n.io). It includes example nodes, credentials, the node linter, and all the tooling you need to get started.
+## What is GLPI?
 
-## Quick Start
+GLPI is a comprehensive IT management suite that helps organizations manage their IT infrastructure, handle support tickets, track assets, manage software licenses, and much more. This n8n node allows you to integrate GLPI into your automation workflows, enabling you to:
 
-> [!TIP]
-> **New to building n8n nodes?** The fastest way to get started is with `npm create @n8n/node`. This command scaffolds a complete node package for you using the [@n8n/node-cli](https://www.npmjs.com/package/@n8n/node-cli).
-
-**To create a new node package from scratch:**
-
-```bash
-npm create @n8n/node
-```
-
-**Already using this starter? Start developing with:**
-
-```bash
-npm run dev
-```
-
-This starts n8n with your nodes loaded and hot reload enabled.
-
-## What's Included
-
-This starter repository includes two example nodes to learn from:
-
-- **[Example Node](nodes/Example/)** - A simple starter node that shows the basic structure with a custom `execute` method
-- **[GitHub Issues Node](nodes/GithubIssues/)** - A complete, production-ready example built using the **declarative style**:
-  - **Low-code approach** - Define operations declaratively without writing request logic
-  - Multiple resources (Issues, Comments)
-  - Multiple operations (Get, Get All, Create)
-  - Two authentication methods (OAuth2 and Personal Access Token)
-  - List search functionality for dynamic dropdowns
-  - Proper error handling and typing
-  - Ideal for HTTP API-based integrations
-
-> [!TIP]
-> The declarative/low-code style (used in GitHub Issues) is the recommended approach for building nodes that interact with HTTP APIs. It significantly reduces boilerplate code and handles requests automatically.
-
-Browse these examples to understand both approaches, then modify them or create your own.
-
-## Finding Inspiration
-
-Looking for more examples? Check out these resources:
-
-- **[npm Community Nodes](https://www.npmjs.com/search?q=keywords:n8n-community-node-package)** - Browse thousands of community-built nodes on npm using the `n8n-community-node-package` tag
-- **[n8n Built-in Nodes](https://github.com/n8n-io/n8n/tree/master/packages/nodes-base/nodes)** - Study the source code of n8n's official nodes for production-ready patterns and best practices
-- **[n8n Credentials](https://github.com/n8n-io/n8n/tree/master/packages/nodes-base/credentials)** - See how authentication is implemented for various services
-
-These are excellent resources to understand how to structure your nodes, handle different API patterns, and implement advanced features.
+- Automatically create and update tickets based on external events
+- Synchronize asset information between GLPI and other systems  
+- Generate reports and analytics from GLPI data
+- Automate routine IT service management tasks
+- Integrate GLPI with communication platforms, monitoring tools, and other business systems
 
 ## Prerequisites
 
-Before you begin, install the following on your development machine:
+Before you begin using this node, ensure you have:
 
-### Required
+1. **n8n installed**: You need n8n installed either locally or on a server. Visit [n8n.io](https://n8n.io) for installation instructions.
 
-- **[Node.js](https://nodejs.org/)** (v20 or higher) and npm
-  - Linux/Mac/WSL: Install via [nvm](https://github.com/nvm-sh/nvm)
-  - Windows: Follow [Microsoft's NodeJS guide](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows)
-- **[git](https://git-scm.com/downloads)**
+2. **GLPI instance**: You need access to a GLPI installation (version 9.x or later recommended, version 10.1+ for best API support).
 
-### Recommended
+3. **GLPI API enabled**: The REST API must be enabled in your GLPI instance:
+   - Go to Setup → General → API
+   - Enable the REST API
+   - Optionally create an API client and generate an App Token for additional security
 
-- Follow n8n's [development environment setup guide](https://docs.n8n.io/integrations/creating-nodes/build/node-development-environment/)
+4. **GLPI user credentials**: You'll need valid GLPI user credentials with appropriate permissions for the operations you want to perform.
 
-> [!NOTE]
-> The `@n8n/node-cli` is included as a dev dependency and will be installed automatically when you run `npm install`. The CLI includes n8n for local development, so you don't need to install n8n globally.
+## Installation
 
-## Getting Started with this Starter
+### Install in n8n
 
-Follow these steps to create your own n8n community node package:
+There are several ways to install this community node in your n8n instance:
 
-### 1. Create Your Repository
+#### Option 1: Install from npm (Recommended for production)
 
-[Generate a new repository](https://github.com/n8n-io/n8n-nodes-starter/generate) from this template, then clone it:
+Once published to npm, you can install it directly:
 
 ```bash
-git clone https://github.com/<your-organization>/<your-repo-name>.git
-cd <your-repo-name>
+# Navigate to your n8n installation directory
+cd ~/.n8n
+
+# Install the node
+npm install n8n-nodes-glpi
 ```
 
-### 2. Install Dependencies
+#### Option 2: Install from source (For development)
 
 ```bash
+# Clone this repository
+git clone https://github.com/yourusername/n8n-nodes-glpi.git
+cd n8n-nodes-glpi
+
+# Install dependencies
 npm install
+
+# Build the node
+npm run build
+
+# Link the node to your n8n installation
+npm link
+
+# In your n8n directory, link to this package
+cd ~/.n8n
+npm link n8n-nodes-glpi
 ```
 
-This installs all required dependencies including the `@n8n/node-cli`.
-
-### 3. Explore the Examples
-
-Browse the example nodes in [nodes/](nodes/) and [credentials/](credentials/) to understand the structure:
-
-- Start with [nodes/Example/](nodes/Example/) for a basic node
-- Study [nodes/GithubIssues/](nodes/GithubIssues/) for a real-world implementation
-
-### 4. Build Your Node
-
-Edit the example nodes to fit your use case, or create new node files by copying the structure from [nodes/Example/](nodes/Example/).
-
-> [!TIP]
-> If you want to scaffold a completely new node package, use `npm create @n8n/node` to start fresh with the CLI's interactive generator.
-
-### 5. Configure Your Package
-
-Update `package.json` with your details:
-
-- `name` - Your package name (must start with `n8n-nodes-`)
-- `author` - Your name and email
-- `repository` - Your repository URL
-- `description` - What your node does
-
-Make sure your node is registered in the `n8n.nodes` array.
-
-### 6. Develop and Test Locally
-
-Start n8n with your node loaded:
+#### Option 3: Install from GitHub
 
 ```bash
+# Install directly from GitHub
+cd ~/.n8n
+npm install github:yourusername/n8n-nodes-glpi
+```
+
+After installation, restart your n8n instance, and the GLPI node will appear in the node palette.
+
+## Development Setup
+
+If you want to contribute to this node or customize it for your needs, here's how to set up the development environment:
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/n8n-nodes-glpi.git
+cd n8n-nodes-glpi
+
+# Install dependencies
+npm install
+
+# Build the node
+npm run build
+
+# For development with auto-rebuild on changes
 npm run dev
 ```
 
-This command runs `n8n-node dev` which:
+## Configuration
 
-- Builds your node with watch mode
-- Starts n8n with your node available
-- Automatically rebuilds when you make changes
-- Opens n8n in your browser (usually http://localhost:5678)
+### Setting up GLPI Credentials in n8n
 
-You can now test your node in n8n workflows!
+1. In n8n, go to **Credentials** → **New**
+2. Select **GLPI API** from the list
+3. Configure the following fields:
 
-> [!NOTE]
-> Learn more about CLI commands in the [@n8n/node-cli documentation](https://www.npmjs.com/package/@n8n/node-cli).
+   - **GLPI URL**: Your GLPI instance URL (e.g., `https://glpi.example.com/glpi`)
+   - **Authentication Method**: Choose one of:
+     - **User Credentials**: Use username and password (most common)
+     - **User Token**: Use a pre-generated API token from your GLPI user preferences
+     - **Session Token**: Use an existing session token (for advanced scenarios)
+   - **Username**: Your GLPI username (if using User Credentials)
+   - **Password**: Your GLPI password (if using User Credentials)
+   - **App Token**: (Optional) Application token from GLPI API configuration for additional security
 
-### 7. Lint Your Code
+4. Click **Create** to save the credentials
 
-Check for errors:
+### Testing Your Connection
 
-```bash
-npm run lint
+After setting up credentials, you can test the connection by creating a simple workflow:
+
+1. Add a GLPI node to your workflow
+2. Select your GLPI credentials
+3. Choose **Tickets** as the resource
+4. Choose **Get All** as the operation
+5. Execute the node
+
+If the connection is successful, you should see a list of tickets from your GLPI instance.
+
+## Node Operations
+
+The GLPI node supports operations on various resources. Here's what you can do with each:
+
+### Tickets
+
+Tickets are the core of GLPI's helpdesk functionality. You can:
+
+- **Create**: Create new support tickets with custom fields like title, description, priority, category, etc.
+- **Get**: Retrieve a specific ticket by ID to check its status or details
+- **Get All**: List all tickets with optional filtering and pagination
+- **Update**: Modify existing tickets (change status, assign to technicians, add solutions)
+- **Delete**: Remove tickets (with optional permanent deletion)
+- **Search**: Advanced search with multiple criteria
+
+### Computers
+
+Manage your IT assets and computer inventory:
+
+- **Create**: Add new computers to the inventory
+- **Get**: Retrieve details about a specific computer
+- **Get All**: List all computers in the system
+- **Update**: Update computer information (location, user, specifications)
+- **Delete**: Remove computers from inventory
+
+### Users
+
+Handle user management:
+
+- **Create**: Add new users to GLPI
+- **Get**: Retrieve user information
+- **Get All**: List all users
+- **Update**: Modify user details and permissions
+
+### Software
+
+Track software licenses and installations:
+
+- **Create**: Add new software entries
+- **Get All**: List software inventory
+- **Update**: Modify software information
+
+### Documents
+
+Manage documentation and file attachments:
+
+- **Upload**: Upload documents to GLPI
+- **Get All**: List available documents
+
+## Example Workflows
+
+### Example 1: Create Ticket from Email
+
+This workflow monitors an email inbox and creates GLPI tickets automatically:
+
+```json
+{
+  "name": "Email to GLPI Ticket",
+  "nodes": [
+    {
+      "name": "Email Trigger",
+      "type": "n8n-nodes-base.emailReadImap",
+      "position": [250, 300]
+    },
+    {
+      "name": "GLPI",
+      "type": "n8n-nodes-glpi.Glpi",
+      "position": [450, 300],
+      "parameters": {
+        "resource": "Ticket",
+        "operation": "create",
+        "name": "={{$node[\"Email Trigger\"].json[\"subject\"]}}",
+        "content": "={{$node[\"Email Trigger\"].json[\"text\"]}}",
+        "urgency": 3,
+        "impact": 3
+      }
+    }
+  ]
+}
 ```
 
-Auto-fix issues when possible:
+### Example 2: Daily Ticket Report
 
-```bash
-npm run lint:fix
+Generate a daily report of all open tickets:
+
+```json
+{
+  "name": "Daily GLPI Report",
+  "nodes": [
+    {
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 24 }]
+        }
+      }
+    },
+    {
+      "name": "Get Open Tickets",
+      "type": "n8n-nodes-glpi.Glpi",
+      "parameters": {
+        "resource": "Ticket",
+        "operation": "search",
+        "searchCriteria": {
+          "criteria[0][field]": "12",
+          "criteria[0][searchtype]": "equals",
+          "criteria[0][value]": "2"
+        }
+      }
+    }
+  ]
+}
 ```
 
-### 8. Build for Production
+## Troubleshooting
 
-When ready to publish:
+### Common Issues and Solutions
+
+**Issue: "Failed to initialize GLPI session"**
+- Check that your GLPI URL is correct and includes the path to GLPI (e.g., `/glpi`)
+- Verify that the REST API is enabled in GLPI settings
+- Ensure your credentials are correct
+- Check if your user has sufficient permissions
+
+**Issue: "404 Not Found" errors**
+- Verify the GLPI URL doesn't have `/apirest.php` at the end (the node adds this automatically)
+- Check if the resource you're trying to access exists in your GLPI version
+
+**Issue: "Session Token expired"**
+- GLPI sessions expire after a period of inactivity
+- The node handles session initialization automatically, but you may need to re-authenticate
+
+**Issue: Node doesn't appear in n8n**
+- Restart n8n after installation
+- Check that the node is properly listed in package.json
+- Verify the build completed successfully with `npm run build`
+
+### Debug Mode
+
+To enable detailed logging for troubleshooting:
+
+```bash
+# Set n8n to verbose logging
+export N8N_LOG_LEVEL=debug
+
+# Start n8n
+n8n start
+```
+
+## Advanced Usage
+
+### Using with GLPI 10.1+ (Modern API)
+
+GLPI 10.1 and later versions include a new modern API with built-in OpenAPI/Swagger support. If you're using GLPI 10.1+:
+
+1. Access the Swagger UI at: `https://your-glpi.com/glpi/api.php/swagger`
+2. You can export the OpenAPI specification and update the `openapi.json` file in this node for the latest endpoints
+3. The modern API uses OAuth2 authentication, which provides better security
+
+### Customizing the OpenAPI Specification
+
+The node uses an OpenAPI specification file (`nodes/Glpi/openapi.json`) to generate its properties. You can customize this file to:
+
+- Add new endpoints specific to your GLPI plugins
+- Modify field descriptions and defaults
+- Add custom validation rules
+
+After modifying the OpenAPI spec, rebuild the node:
 
 ```bash
 npm run build
 ```
 
-This compiles your TypeScript code to the `dist/` folder.
+### Extending the Node
 
-### 9. Prepare for Publishing
+You can extend this node to support additional GLPI features:
 
-Before publishing:
+1. Edit `nodes/Glpi/openapi.json` to add new endpoints
+2. Modify `nodes/Glpi/Glpi.node.ts` to handle special logic
+3. Update `credentials/GlpiApi.credentials.ts` for new authentication methods
 
-1. **Update documentation**: Replace this README with your node's documentation. Use [README_TEMPLATE.md](README_TEMPLATE.md) as a starting point.
-2. **Update the LICENSE**: Add your details to the [LICENSE](LICENSE.md) file.
-3. **Test thoroughly**: Ensure your node works in different scenarios.
+## API Rate Limiting
 
-### 10. Publish to npm
+Be aware of potential rate limiting on your GLPI instance:
 
-Publish your package to make it available to the n8n community:
+- GLPI doesn't have built-in rate limiting by default
+- Your web server or reverse proxy might impose limits
+- For bulk operations, consider using batch endpoints when available
+- Implement delays between requests in your workflows if needed
 
-```bash
-npm publish
-```
+## Security Best Practices
 
-Learn more about [publishing to npm](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry).
-
-### 11. Submit for Verification (Optional)
-
-Get your node verified for n8n Cloud:
-
-1. Ensure your node meets the [requirements](https://docs.n8n.io/integrations/creating-nodes/deploy/submit-community-nodes/):
-   - Uses MIT license ✅ (included in this starter)
-   - No external package dependencies
-   - Follows n8n's design guidelines
-   - Passes quality and security review
-
-2. Submit through the [n8n Creator Portal](https://creators.n8n.io/nodes)
-
-**Benefits of verification:**
-
-- Available directly in n8n Cloud
-- Discoverable in the n8n nodes panel
-- Verified badge for quality assurance
-- Increased visibility in the n8n community
-
-## Available Scripts
-
-This starter includes several npm scripts to streamline development:
-
-| Script                | Description                                                      |
-| --------------------- | ---------------------------------------------------------------- |
-| `npm run dev`         | Start n8n with your node and watch for changes (runs `n8n-node dev`) |
-| `npm run build`       | Compile TypeScript to JavaScript for production (runs `n8n-node build`) |
-| `npm run build:watch` | Build in watch mode (auto-rebuild on changes)                    |
-| `npm run lint`        | Check your code for errors and style issues (runs `n8n-node lint`) |
-| `npm run lint:fix`    | Automatically fix linting issues when possible (runs `n8n-node lint --fix`) |
-| `npm run release`     | Create a new release (runs `n8n-node release`)                   |
-
-> [!TIP]
-> These scripts use the [@n8n/node-cli](https://www.npmjs.com/package/@n8n/node-cli) under the hood. You can also run CLI commands directly, e.g., `npx n8n-node dev`.
-
-## Troubleshooting
-
-### My node doesn't appear in n8n
-
-1. Make sure you ran `npm install` to install dependencies
-2. Check that your node is listed in `package.json` under `n8n.nodes`
-3. Restart the dev server with `npm run dev`
-4. Check the console for any error messages
-
-### Linting errors
-
-Run `npm run lint:fix` to automatically fix most common issues. For remaining errors, check the [n8n node development guidelines](https://docs.n8n.io/integrations/creating-nodes/).
-
-### TypeScript errors
-
-Make sure you're using Node.js v20 or higher and have run `npm install` to get all type definitions.
-
-## Resources
-
-- **[n8n Node Documentation](https://docs.n8n.io/integrations/creating-nodes/)** - Complete guide to building nodes
-- **[n8n Community Forum](https://community.n8n.io/)** - Get help and share your nodes
-- **[@n8n/node-cli Documentation](https://www.npmjs.com/package/@n8n/node-cli)** - CLI tool reference
-- **[n8n Creator Portal](https://creators.n8n.io/nodes)** - Submit your node for verification
-- **[Submit Community Nodes Guide](https://docs.n8n.io/integrations/creating-nodes/deploy/submit-community-nodes/)** - Verification requirements and process
+1. **Use HTTPS**: Always use HTTPS for your GLPI instance to encrypt data in transit
+2. **App Tokens**: Use App Tokens for an additional layer of security
+3. **Minimal Permissions**: Create dedicated GLPI users with minimal required permissions
+4. **Rotate Credentials**: Regularly rotate API tokens and passwords
+5. **Audit Logs**: Monitor GLPI's event logs for unusual API activity
 
 ## Contributing
 
-Have suggestions for improving this starter? [Open an issue](https://github.com/n8n-io/n8n-nodes-starter/issues) or submit a pull request!
+We welcome contributions to improve this node! Here's how you can help:
+
+1. **Report Issues**: If you find bugs, please [create an issue](https://github.com/yourusername/n8n-nodes-glpi/issues)
+2. **Suggest Features**: Have ideas for new features? Open a discussion
+3. **Submit Pull Requests**: 
+   - Fork the repository
+   - Create your feature branch (`git checkout -b feature/AmazingFeature`)
+   - Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+   - Push to the branch (`git push origin feature/AmazingFeature`)
+   - Open a Pull Request
+
+### Development Guidelines
+
+- Follow the existing code style
+- Add comments for complex logic
+- Update documentation for new features
+- Test your changes thoroughly
+- Ensure the build passes (`npm run build`)
+
+## Resources
+
+- [GLPI Documentation](https://glpi-project.org/documentation/)
+- [GLPI API Documentation](https://github.com/glpi-project/glpi/blob/master/apirest.md)
+- [n8n Documentation](https://docs.n8n.io)
+- [n8n Community Nodes](https://docs.n8n.io/integrations/community-nodes/)
+- [OpenAPI Specification](https://swagger.io/specification/)
 
 ## License
 
-[MIT](https://github.com/n8n-io/n8n-nodes-starter/blob/master/LICENSE.md)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+
+## Changelog
+
+### Version 0.1.0 (Initial Release)
+- Basic CRUD operations for Tickets, Computers, and Users
+- Search functionality
+- Support for multiple authentication methods
+- OpenAPI-based property generation
+
+## Support
+
+- For issues with this node: [GitHub Issues](https://github.com/yourusername/n8n-nodes-glpi/issues)
+- For GLPI questions: [GLPI Forums](https://forum.glpi-project.org/)
+- For n8n questions: [n8n Community](https://community.n8n.io)
+
+## Acknowledgments
+
+- Thanks to the GLPI team for creating an excellent open-source ITSM solution
+- Thanks to the n8n team for building an amazing workflow automation platform
+- Thanks to [@devlikeapro](https://github.com/devlikeapro) for the n8n-openapi-node tool
+- Thanks to all contributors who help improve this integration
+
+---
+
+**Note**: This node is not officially affiliated with or endorsed by the GLPI project. It's a community contribution to help integrate GLPI with n8n workflows.

@@ -1,0 +1,35 @@
+{
+  "node": "n8n-nodes-glpi.Glpi",
+  "nodeVersion": "1.0",
+  "codexVersion": "1.0",
+  "categories": [
+    "Data & Storage",
+    "Productivity"
+  ],
+  "resources": {
+    "credentialDocumentation": [
+      {
+        "url": "https://glpi-project.org/documentation/"
+      }
+    ],
+    "primaryDocumentation": [
+      {
+        "url": "https://github.com/glpi-project/glpi/blob/master/apirest.md"
+      }
+    ]
+  },
+  "subcategories": {
+    "Data & Storage": [
+      "IT Management"
+    ],
+    "Productivity": [
+      "Ticketing"
+    ]
+  },
+  "alias": [
+    "ITSM",
+    "Asset Management",
+    "Help Desk",
+    "Service Desk"
+  ]
+}

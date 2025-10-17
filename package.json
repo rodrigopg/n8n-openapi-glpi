@@ -1,19 +1,25 @@
 {
-	"name": "n8n-nodes-<...>",
+	"name": "n8n-nodes-glpi",
 	"version": "0.1.0",
-	"description": "",
+	"description": "n8n node for GLPI - IT Asset Management and Helpdesk System",
 	"license": "MIT",
-	"homepage": "",
+	"homepage": "https://github.com/yourusername/n8n-nodes-glpi",
 	"keywords": [
-		"n8n-community-node-package"
+		"n8n-community-node-package",
+		"glpi",
+		"itsm",
+		"helpdesk",
+		"asset-management",
+		"ticketing",
+		"it-service-management"
 	],
 	"author": {
-		"name": "Elias Meire",
-		"email": "elias@meire.dev"
+		"name": "Your Name",
+		"email": "your.email@example.com"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/<...>/n8n-nodes-<...>.git"
+		"url": "https://github.com/yourusername/n8n-nodes-glpi.git"
 	},
 	"scripts": {
 		"build": "n8n-node build",
@@ -31,16 +37,18 @@
 		"n8nNodesApiVersion": 1,
 		"strict": true,
 		"credentials": [
-			"dist/credentials/GithubIssuesApi.credentials.js",
-			"dist/credentials/GithubIssuesOAuth2Api.credentials.js"
+			"dist/credentials/GlpiApi.credentials.js"
 		],
 		"nodes": [
-			"dist/nodes/GithubIssues/GithubIssues.node.js",
-			"dist/nodes/Example/Example.node.js"
+			"dist/nodes/Glpi/Glpi.node.js"
 		]
+	},
+	"dependencies": {
+		"@devlikeapro/n8n-openapi-node": "^0.1.4"
 	},
 	"devDependencies": {
 		"@n8n/node-cli": "*",
+		"@types/node": "^24.8.0",
 		"eslint": "9.32.0",
 		"prettier": "3.6.2",
 		"release-it": "^19.0.4",

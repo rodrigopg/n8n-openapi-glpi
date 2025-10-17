@@ -1,0 +1,928 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "GLPI REST API",
+    "description": "API for GLPI - IT Asset Management and Helpdesk System",
+    "version": "1.0.0",
+    "contact": {
+      "name": "GLPI Project",
+      "url": "https://glpi-project.org"
+    }
+  },
+  "servers": [
+    {
+      "url": "{glpiUrl}/apirest.php",
+      "variables": {
+        "glpiUrl": {
+          "default": "https://demo.glpi-project.org",
+          "description": "The base URL of your GLPI installation"
+        }
+      }
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "sessionToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Session-Token"
+      },
+      "appToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "App-Token"
+      }
+    },
+    "schemas": {
+      "Ticket": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Ticket ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Ticket title"
+          },
+          "content": {
+            "type": "string",
+            "description": "Ticket description"
+          },
+          "status": {
+            "type": "integer",
+            "description": "Ticket status (1=New, 2=Processing, 3=Planned, 4=Pending, 5=Solved, 6=Closed)"
+          },
+          "urgency": {
+            "type": "integer",
+            "description": "Urgency level (1-5)"
+          },
+          "impact": {
+            "type": "integer",
+            "description": "Impact level (1-5)"
+          },
+          "priority": {
+            "type": "integer",
+            "description": "Priority level (1-5)"
+          },
+          "requesttypes_id": {
+            "type": "integer",
+            "description": "Request type ID"
+          },
+          "type": {
+            "type": "integer",
+            "description": "Ticket type (1=Incident, 2=Request)"
+          },
+          "users_id_recipient": {
+            "type": "integer",
+            "description": "Requester user ID"
+          },
+          "entities_id": {
+            "type": "integer",
+            "description": "Entity ID"
+          }
+        }
+      },
+      "Computer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Computer ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Computer name"
+          },
+          "serial": {
+            "type": "string",
+            "description": "Serial number"
+          },
+          "otherserial": {
+            "type": "string",
+            "description": "Inventory number"
+          },
+          "contact": {
+            "type": "string",
+            "description": "Contact person"
+          },
+          "contact_num": {
+            "type": "string",
+            "description": "Contact number"
+          },
+          "users_id": {
+            "type": "integer",
+            "description": "User ID"
+          },
+          "groups_id": {
+            "type": "integer",
+            "description": "Group ID"
+          },
+          "states_id": {
+            "type": "integer",
+            "description": "Status ID"
+          },
+          "locations_id": {
+            "type": "integer",
+            "description": "Location ID"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "User ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Username"
+          },
+          "realname": {
+            "type": "string",
+            "description": "Last name"
+          },
+          "firstname": {
+            "type": "string",
+            "description": "First name"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number"
+          },
+          "mobile": {
+            "type": "string",
+            "description": "Mobile phone"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Is user active"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Authentication operations"
+    },
+    {
+      "name": "Tickets",
+      "description": "Ticket management operations"
+    },
+    {
+      "name": "Computers",
+      "description": "Computer asset management"
+    },
+    {
+      "name": "Users",
+      "description": "User management operations"
+    },
+    {
+      "name": "Software",
+      "description": "Software management"
+    },
+    {
+      "name": "Documents",
+      "description": "Document management"
+    }
+  ],
+  "paths": {
+    "/initSession": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Initialize session with credentials",
+        "operationId": "initSession",
+        "parameters": [
+          {
+            "name": "App-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Application token from GLPI configuration"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Basic authentication credentials (base64 encoded)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session initialized successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "session_token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/killSession": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "End current session",
+        "operationId": "killSession",
+        "security": [{"sessionToken": []}],
+        "responses": {
+          "200": {
+            "description": "Session ended successfully"
+          }
+        }
+      }
+    },
+    "/Ticket": {
+      "get": {
+        "tags": ["Tickets"],
+        "summary": "Get all tickets",
+        "operationId": "getTickets",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "0-50"
+            },
+            "description": "Range of results (e.g., 0-50)"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Field to sort by"
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["ASC", "DESC"]
+            },
+            "description": "Sort order"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tickets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Ticket"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Tickets"],
+        "summary": "Create a new ticket",
+        "operationId": "createTicket",
+        "security": [{"sessionToken": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/Ticket"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ticket created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Ticket/{id}": {
+      "get": {
+        "tags": ["Tickets"],
+        "summary": "Get a specific ticket",
+        "operationId": "getTicket",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Ticket ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ticket"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Tickets"],
+        "summary": "Update a ticket",
+        "operationId": "updateTicket",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Ticket ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/Ticket"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ticket updated successfully"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Tickets"],
+        "summary": "Delete a ticket",
+        "operationId": "deleteTicket",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Ticket ID"
+          },
+          {
+            "name": "force_purge",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Permanently delete the ticket"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket deleted successfully"
+          }
+        }
+      }
+    },
+    "/Computer": {
+      "get": {
+        "tags": ["Computers"],
+        "summary": "Get all computers",
+        "operationId": "getComputers",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "0-50"
+            },
+            "description": "Range of results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of computers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Computer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Computers"],
+        "summary": "Create a new computer",
+        "operationId": "createComputer",
+        "security": [{"sessionToken": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/Computer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Computer created successfully"
+          }
+        }
+      }
+    },
+    "/Computer/{id}": {
+      "get": {
+        "tags": ["Computers"],
+        "summary": "Get a specific computer",
+        "operationId": "getComputer",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Computer ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Computer details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Computer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Computers"],
+        "summary": "Update a computer",
+        "operationId": "updateComputer",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Computer ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/Computer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Computer updated successfully"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Computers"],
+        "summary": "Delete a computer",
+        "operationId": "deleteComputer",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Computer ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Computer deleted successfully"
+          }
+        }
+      }
+    },
+    "/User": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all users",
+        "operationId": "getUsers",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "0-50"
+            },
+            "description": "Range of results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create a new user",
+        "operationId": "createUser",
+        "security": [{"sessionToken": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully"
+          }
+        }
+      }
+    },
+    "/User/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get a specific user",
+        "operationId": "getUser",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "User ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update a user",
+        "operationId": "updateUser",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "User ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully"
+          }
+        }
+      }
+    },
+    "/search/{itemtype}": {
+      "get": {
+        "tags": ["Tickets", "Computers", "Users"],
+        "summary": "Search for items",
+        "operationId": "searchItems",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "itemtype",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["Ticket", "Computer", "User", "Software", "Monitor", "Printer"]
+            },
+            "description": "Type of item to search"
+          },
+          {
+            "name": "criteria[0][field]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Field to search in"
+          },
+          {
+            "name": "criteria[0][searchtype]",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["contains", "equals", "notequals", "lessthan", "morethan"]
+            },
+            "description": "Search type"
+          },
+          {
+            "name": "criteria[0][value]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search value"
+          },
+          {
+            "name": "forcedisplay",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fields to force display (comma-separated field IDs)"
+          },
+          {
+            "name": "rawdata",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include raw data in response"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "totalcount": {
+                      "type": "integer"
+                    },
+                    "range": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Software": {
+      "get": {
+        "tags": ["Software"],
+        "summary": "Get all software",
+        "operationId": "getSoftware",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "0-50"
+            },
+            "description": "Range of results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of software"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Software"],
+        "summary": "Create new software",
+        "operationId": "createSoftware",
+        "security": [{"sessionToken": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Software name"
+                      },
+                      "manufacturers_id": {
+                        "type": "integer",
+                        "description": "Manufacturer ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Software created successfully"
+          }
+        }
+      }
+    },
+    "/Document": {
+      "get": {
+        "tags": ["Documents"],
+        "summary": "Get all documents",
+        "operationId": "getDocuments",
+        "security": [{"sessionToken": []}],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "0-50"
+            },
+            "description": "Range of results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of documents"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Documents"],
+        "summary": "Upload a document",
+        "operationId": "uploadDocument",
+        "security": [{"sessionToken": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uploadManifest": {
+                    "type": "string",
+                    "description": "JSON manifest with document metadata"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Document file to upload"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document uploaded successfully"
+          }
+        }
+      }
+    }
+  }
+}
