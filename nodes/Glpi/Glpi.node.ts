@@ -67,19 +67,25 @@ export class Glpi implements INodeType {
         const resource = this.getNodeParameter('resource', i) as string;
         const operation = this.getNodeParameter('operation', i) as string;
 
+        // Parse the operation ID to extract HTTP method and path
+        // Format: "GET -Administration-User-Me" -> method: GET, path: /Administration/User/Me
+        const operationParts = operation.split(' ');
+        const method = operationParts[0] as string;
+        const pathPart = operationParts[1]?.replace(/^-/, '') || '';
+        const path = '/' + pathPart.replace(/-/g, '/');
+
         // Build the request options
         // Note: url is just the path, baseURL is set in requestDefaults
         const requestOptions: IHttpRequestOptions = {
-          method: 'GET',
-          url: resource,
+          method: method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+          url: path,
           headers: {
             'Accept': 'application/json',
           },
         };
 
-        // Determine HTTP method based on operation
-        if (operation.includes('create') || operation.includes('post') || operation === 'POST') {
-          requestOptions.method = 'POST';
+        // Add Content-Type header and body for methods that support it
+        if (['POST', 'PUT', 'PATCH'].includes(method)) {
           requestOptions.headers!['Content-Type'] = 'application/json';
 
           // Get body parameters if they exist
@@ -90,32 +96,6 @@ export class Glpi implements INodeType {
             }
           } catch {
             // requestBody parameter might not exist for all operations
-          }
-        } else if (operation.includes('update') || operation.includes('patch') || operation === 'PATCH') {
-          requestOptions.method = 'PATCH';
-          requestOptions.headers!['Content-Type'] = 'application/json';
-
-          try {
-            const bodyParameters = this.getNodeParameter('requestBody', i, {}) as IDataObject;
-            if (Object.keys(bodyParameters).length > 0) {
-              requestOptions.body = bodyParameters;
-            }
-          } catch {
-            // requestBody parameter might not exist
-          }
-        } else if (operation.includes('delete') || operation === 'DELETE') {
-          requestOptions.method = 'DELETE';
-        } else if (operation.includes('put') || operation === 'PUT') {
-          requestOptions.method = 'PUT';
-          requestOptions.headers!['Content-Type'] = 'application/json';
-
-          try {
-            const bodyParameters = this.getNodeParameter('requestBody', i, {}) as IDataObject;
-            if (Object.keys(bodyParameters).length > 0) {
-              requestOptions.body = bodyParameters;
-            }
-          } catch {
-            // requestBody parameter might not exist
           }
         }
 
@@ -133,6 +113,8 @@ export class Glpi implements INodeType {
         console.log('=== GLPI Node Debug Info ===');
         console.log('Resource:', resource);
         console.log('Operation:', operation);
+        console.log('Parsed Method:', method);
+        console.log('Parsed Path:', path);
         console.log('Request Options:', JSON.stringify(requestOptions, null, 2));
         console.log('Credential Type:', 'glpiOAuth2Api');
 
