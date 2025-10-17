@@ -127,18 +127,21 @@ export class Glpi implements INodeType {
         // If no valid token, get a new one
         if (!accessToken) {
           try {
-            const tokenResponse = await this.helpers.request({
+            const tokenResponse = await this.helpers.httpRequest({
               method: 'POST',
               url: credentials.accessTokenUrl as string,
               auth: {
                 username: credentials.clientId as string,
                 password: credentials.clientSecret as string,
               },
-              form: {
+              body: {
                 grant_type: 'password',
                 username: credentials.username,
                 password: credentials.password,
                 scope: credentials.scope,
+              },
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
               },
               json: true,
             });
@@ -148,7 +151,8 @@ export class Glpi implements INodeType {
             // TODO: Save token back to credentials for caching
             // This would require updating the credential, which is complex
           } catch (error) {
-            throw new Error(`OAuth2 token request failed: ${error instanceof Error ? error.message : String(error)}`);
+            const errorMessage = `OAuth2 token request failed: ${error instanceof Error ? error.message : String(error)}`;
+            throw new Error(errorMessage);
           }
         }
 
@@ -159,8 +163,11 @@ export class Glpi implements INodeType {
         const fullUrl = `${credentials.glpiUrl}/api.php${path}`;
         requestOptions.url = fullUrl;
 
+        // Ensure response is parsed as JSON
+        requestOptions.json = true;
+
         // Execute the request with the access token
-        const response = await this.helpers.request(requestOptions);
+        const response = await this.helpers.httpRequest(requestOptions);
 
         // Handle the response
         if (Array.isArray(response)) {
