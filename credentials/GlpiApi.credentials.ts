@@ -2,17 +2,18 @@ import {
 	ICredentialType,
 	INodeProperties,
 	IAuthenticateGeneric,
+	ICredentialTestRequest,
 	Icon,
 } from 'n8n-workflow';
 
 /**
- * GLPI API Credentials
- * This credential type supports multiple authentication methods for GLPI
+ * GLPI API Credentials for GLPI 11+
+ * Supports OAuth2 authentication with the High-Level API
  */
 export class GlpiApi implements ICredentialType {
 	name = 'glpiApi';
 	displayName = 'GLPI API';
-	documentationUrl = 'https://glpi-project.org/documentation/';
+	documentationUrl = 'https://glpi-developer-documentation.readthedocs.io/en/latest/devapi/hlapi/';
 	icon: Icon = { light: 'file:../icons/glpi_white.svg', dark: 'file:../icons/glpi_color.svg' };
 	properties: INodeProperties[] = [
 		{
@@ -20,33 +21,9 @@ export class GlpiApi implements ICredentialType {
 			name: 'url',
 			type: 'string',
 			default: '',
-			placeholder: 'https://your-glpi-instance.com/glpi',
-			description: 'The base URL of your GLPI installation (without /apirest.php)',
+			placeholder: 'http://localhost',
+			description: 'The base URL of your GLPI installation (e.g., http://localhost or https://glpi.example.com)',
 			required: true,
-		},
-		{
-			displayName: 'Authentication Method',
-			name: 'authenticationType',
-			type: 'options',
-			options: [
-				{
-					name: 'User Credentials',
-					value: 'userCredentials',
-					description: 'Authenticate with username and password',
-				},
-				{
-					name: 'User Token',
-					value: 'userToken',
-					description: 'Authenticate with a user token',
-				},
-				{
-					name: 'Session Token',
-					value: 'sessionToken',
-					description: 'Use an existing session token',
-				},
-			],
-			default: 'userCredentials',
-			description: 'How to authenticate with the GLPI API',
 		},
 		{
 			displayName: 'Username',
@@ -54,11 +31,7 @@ export class GlpiApi implements ICredentialType {
 			type: 'string',
 			default: '',
 			description: 'Your GLPI username',
-			displayOptions: {
-				show: {
-					authenticationType: ['userCredentials'],
-				},
-			},
+			required: true,
 		},
 		{
 			displayName: 'Password',
@@ -69,61 +42,42 @@ export class GlpiApi implements ICredentialType {
 			},
 			default: '',
 			description: 'Your GLPI password',
-			displayOptions: {
-				show: {
-					authenticationType: ['userCredentials'],
-				},
-			},
+			required: true,
 		},
 		{
-			displayName: 'User Token',
-			name: 'userToken',
+			displayName: 'Client ID',
+			name: 'clientId',
+			type: 'string',
+			default: '',
+			placeholder: 'your-oauth-client-id',
+			description: 'OAuth2 Client ID (optional, leave empty for password grant)',
+			required: false,
+		},
+		{
+			displayName: 'Client Secret',
+			name: 'clientSecret',
 			type: 'string',
 			typeOptions: {
 				password: true,
 			},
 			default: '',
-			description: 'Your GLPI API user token (can be generated in your GLPI user preferences)',
-			displayOptions: {
-				show: {
-					authenticationType: ['userToken'],
-				},
-			},
-		},
-		{
-			displayName: 'Session Token',
-			name: 'sessionToken',
-			type: 'string',
-			typeOptions: {
-				password: true,
-			},
-			default: '',
-			description: 'An existing GLPI session token',
-			displayOptions: {
-				show: {
-					authenticationType: ['sessionToken'],
-				},
-			},
-		},
-		{
-			displayName: 'App Token',
-			name: 'appToken',
-			type: 'string',
-			typeOptions: {
-				password: true,
-			},
-			default: '',
-			description: 'Optional: Application token from GLPI API configuration (Setup > General > API)',
+			description: 'OAuth2 Client Secret (optional)',
 			required: false,
 		},
 	];
 
 	// This method is called by n8n to authenticate requests
+	// For GLPI 11, we use OAuth2 password grant
 	authenticate: IAuthenticateGeneric = {
 		type: 'generic',
 		properties: {
-			headers: {
-				'App-Token': '={{$credentials.appToken}}',
+			qs: {
+				grant_type: 'password',
+				username: '={{$credentials.username}}',
+				password: '={{$credentials.password}}',
+				client_id: '={{$credentials.clientId}}',
+				client_secret: '={{$credentials.clientSecret}}',
+				scope: 'api',
 			},
 		},
 	};
@@ -132,19 +86,8 @@ export class GlpiApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: '={{$credentials.url}}',
-			url: '/apirest.php/getGlpiConfig',
-			headers: {
-				'App-Token': '={{$credentials.appToken}}',
-			},
+			url: '/api.php/v2',
+			method: 'GET',
 		},
-	};
-}
-
-// Interface for credential test request
-interface ICredentialTestRequest {
-	request: {
-		baseURL: string;
-		url: string;
-		headers?: Record<string, string>;
 	};
 }

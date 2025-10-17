@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an n8n community node that provides integration with GLPI (IT Asset Management and Helpdesk System). The node is built using the `@devlikeapro/n8n-openapi-node` package, which generates n8n node properties from an OpenAPI specification.
+This is an n8n community node that provides integration with GLPI 11+ (IT Asset Management and Helpdesk System). The node is built using the `@devlikeapro/n8n-openapi-node` package, which generates n8n node properties from an OpenAPI specification.
+
+**GLPI Version**: This node supports GLPI 11+ with the new High-Level API (HL API). The legacy REST API (GLPI 9/10) is not supported by this version.
 
 ## Key Architecture
 
@@ -18,29 +20,27 @@ The node uses an **OpenAPI specification** (`nodes/Glpi/openapi.json`) to automa
 
 ### Authentication Flow
 
-The node implements a **session-based authentication** system:
+The node implements **OAuth2 authentication** for GLPI 11:
 
-1. **Initial Authentication**: Uses username/password (Basic Auth) to call `/initSession` endpoint
-2. **Session Token**: Stores the returned `session_token` for subsequent requests
-3. **Request Headers**: All API requests include `Session-Token` and optional `App-Token` headers
-4. **Session Cleanup**: Calls `/killSession` after execution completes
+1. **OAuth2 Password Grant**: Uses username/password to obtain OAuth2 access tokens
+2. **Token Management**: n8n's credential system handles token refresh automatically
+3. **Request Headers**: Authentication is handled by n8n's `httpRequestWithAuthentication` helper
 
-The credentials file (`GlpiApi.credentials.ts`) supports three authentication methods:
-- User Credentials (username/password)
-- User Token
-- Session Token
+The credentials file (`GlpiApi.credentials.ts`) supports:
+- Username/Password authentication (OAuth2 password grant)
+- Optional Client ID and Client Secret for OAuth2 clients
+- Scope: `api` for API access
 
 ### Request Execution Pattern
 
 The node's `execute()` method in `Glpi.node.ts`:
 
-1. Gets credentials and initializes session if needed
-2. Processes each input item
-3. Maps operations (create/get/getAll/update/delete/search) to HTTP methods and endpoints
-4. Builds request with proper headers and body
-5. Cleans up session when done
+1. Processes each input item
+2. Uses `httpRequestWithAuthentication` helper which handles OAuth2 automatically
+3. The OpenAPI spec defines all endpoints and operations
+4. Request building is handled by the n8n framework based on the OpenAPI spec
 
-**Important**: The base URL is set in `requestDefaults.baseURL` as `={{$credentials.url}}/apirest.php`
+**Important**: The base URL is set in `requestDefaults.baseURL` as `={{$credentials.url}}/api.php/v2`
 
 ## Development Commands
 
@@ -112,31 +112,25 @@ dist/                       # Compiled output (git-ignored)
 
 ## Important Implementation Details
 
-### Operation Mapping
+### API Endpoint Structure
 
-The node maps high-level operations to GLPI REST API endpoints:
+GLPI 11 High-Level API uses a different structure than the legacy API:
 
-- **create** → POST `/{resource}`
-- **get** → GET `/{resource}/{id}`
-- **getAll** → GET `/{resource}` (with Range header for pagination)
-- **update** → PUT `/{resource}/{id}`
-- **delete** → DELETE `/{resource}/{id}` (with optional `force_purge` param)
-- **search** → GET `/search/{resource}` (with query parameters)
+- Base URL: `/api.php/v2`
+- Resources are under `/Assets/` (e.g., `/Assets/Computer`, `/Assets/Ticket`)
+- RESTful design with standard HTTP methods (GET, POST, PATCH, PUT, DELETE)
+- OAuth2 authentication via `/api.php/token` endpoint
 
-### Request Body Format
+### OpenAPI-Driven Operations
 
-GLPI API expects input wrapped in an `input` object:
-
-```typescript
-body = { input: createFields };  // For create/update operations
-```
+All operations are defined in the `openapi.json` file (112K+ lines). The `@devlikeapro/n8n-openapi-node` package automatically generates node properties from this specification.
 
 ### Error Handling
 
 The node supports `continueOnFail()` mode - if enabled, errors are returned as JSON objects instead of throwing:
 
 ```typescript
-{ error: error.message, resource, operation }
+{ error: error.message }
 ```
 
 ## TypeScript Configuration
@@ -160,30 +154,35 @@ For GLPI 10.1+, you can fetch the latest OpenAPI spec from your instance:
 - Export the OpenAPI specification
 - Replace `nodes/Glpi/openapi.json`
 
-## GLPI API Specifics
+## GLPI 11 High-Level API Specifics
 
 ### API Endpoints
 
-Base: `{glpi_url}/apirest.php`
+Base: `{glpi_url}/api.php/v2`
 
-- `/initSession` - Initialize authentication session
-- `/killSession` - Close authentication session
-- `/{resource}` - CRUD operations on resources (Ticket, Computer, User, etc.)
-- `/search/{resource}` - Advanced search with criteria
+- `/` - API root endpoint
+- `/doc` - API documentation (HTML)
+- `/doc.json` - OpenAPI specification (JSON)
+- `/token` - OAuth2 token endpoint
+- `/Assets/{AssetType}` - Asset resources (Computer, Monitor, NetworkEquipment, etc.)
+- `/Assistance/{ItemType}` - Assistance items (Ticket, Change, Problem, etc.)
+- `/Management/{ItemType}` - Management items (Budget, Contact, Contract, etc.)
 
-### Headers
+### Authentication
 
-Required headers for authenticated requests:
-- `Session-Token`: Session token from initSession
-- `App-Token`: (Optional) Application token for additional security
-- `Content-Type: application/json`
-- `Accept: application/json`
+GLPI 11 uses OAuth2:
+- **Token URL**: `/api.php/token`
+- **Grant Type**: `password` (username/password)
+- **Scopes**: `api`, `user`, `email`, `inventory`, `status`, `graphql`
+- **Token Management**: Handled automatically by n8n
 
-### Pagination
+### Resources
 
-Use `Range` header for pagination on getAll operations:
-- Format: `0-50` (get items 0-50)
-- GLPI returns content-range info in response headers
+The HL API organizes resources by category:
+- **Assets**: Computers, Monitors, Network Equipment, Peripherals, Phones, etc.
+- **Assistance**: Tickets, Changes, Problems
+- **Management**: Budgets, Contacts, Contracts, Documents
+- **Administration**: Users, Groups, Entities, Profiles
 
 ## Package Details
 
