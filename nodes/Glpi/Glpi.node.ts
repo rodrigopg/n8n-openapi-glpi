@@ -147,12 +147,68 @@ export class Glpi implements INodeType {
         }
         console.log('=== End Debug Info ===');
 
-        // Execute the request with OAuth2 authentication
-        const response = await this.helpers.httpRequestWithAuthentication.call(
-          this,
-          'glpiOAuth2Api',
-          requestOptions,
-        );
+        // Get or refresh OAuth2 token manually
+        let accessToken = '';
+        const tokenData = credentials.oauthTokenData as any;
+
+        // Check if we have a valid token
+        if (tokenData && tokenData.access_token && tokenData.expires_at) {
+          const now = Math.floor(Date.now() / 1000);
+          if (tokenData.expires_at > now) {
+            // Token is still valid
+            accessToken = tokenData.access_token;
+            console.log('Using cached access token');
+          }
+        }
+
+        // If no valid token, get a new one
+        if (!accessToken) {
+          console.log('Requesting new access token from:', credentials.accessTokenUrl);
+
+          try {
+            const tokenResponse = await this.helpers.request({
+              method: 'POST',
+              url: credentials.accessTokenUrl as string,
+              auth: {
+                username: credentials.clientId as string,
+                password: credentials.clientSecret as string,
+              },
+              form: {
+                grant_type: 'password',
+                username: credentials.username,
+                password: credentials.password,
+                scope: credentials.scope,
+              },
+              json: true,
+            });
+
+            console.log('Token response received:', {
+              hasAccessToken: !!tokenResponse.access_token,
+              tokenType: tokenResponse.token_type,
+              expiresIn: tokenResponse.expires_in,
+            });
+
+            accessToken = tokenResponse.access_token;
+
+            // TODO: Save token back to credentials
+            // This would require updating the credential, which is complex
+          } catch (error) {
+            console.error('Failed to get access token:', error);
+            throw new Error(`OAuth2 token request failed: ${error instanceof Error ? error.message : String(error)}`);
+          }
+        }
+
+        // Add the access token to the request
+        requestOptions.headers!['Authorization'] = `Bearer ${accessToken}`;
+
+        // Build full URL
+        const fullUrl = `${credentials.glpiUrl}/api.php${path}`;
+        requestOptions.url = fullUrl;
+
+        console.log('Making authenticated request to:', fullUrl);
+
+        // Execute the request with the access token
+        const response = await this.helpers.request(requestOptions);
 
         // Handle the response
         if (Array.isArray(response)) {
