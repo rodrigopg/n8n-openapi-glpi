@@ -1,16 +1,33 @@
 # n8n-nodes-glpi
 
-This is an n8n community node that provides integration with [GLPI](https://glpi-project.org/) (Gestionnaire Libre de Parc Informatique), a powerful open-source IT Asset Management, issue tracking system, and service desk solution.
+This is an n8n community node that provides integration with [GLPI 11+](https://glpi-project.org/) (Gestionnaire Libre de Parc Informatique), a powerful open-source IT Asset Management, issue tracking system, and service desk solution.
+
+**⚠️ GLPI Version Requirement**: This node requires **GLPI 11.0 or later** and uses the new High-Level API (HL API). For GLPI 9.x/10.x (legacy REST API), please use version 0.1.x of this package.
 
 ## What is GLPI?
 
 GLPI is a comprehensive IT management suite that helps organizations manage their IT infrastructure, handle support tickets, track assets, manage software licenses, and much more. This n8n node allows you to integrate GLPI into your automation workflows, enabling you to:
 
-- Automatically create and update tickets based on external events
-- Synchronize asset information between GLPI and other systems  
+- Automatically create and update tickets, changes, and problems based on external events
+- Synchronize asset information between GLPI and other systems
 - Generate reports and analytics from GLPI data
 - Automate routine IT service management tasks
 - Integrate GLPI with communication platforms, monitoring tools, and other business systems
+
+## What's New in Version 0.2.0
+
+**Major Update - GLPI 11 High-Level API Support**
+
+- ✨ **OAuth2 Authentication**: Modern, secure authentication with automatic token management
+- 🚀 **Simplified API**: RESTful design with intuitive endpoint structure
+- 📦 **Complete Resource Coverage**: Auto-generated from GLPI 11 OpenAPI specification (112K+ lines)
+- 🔒 **Better Security**: OAuth2 password grant with optional client credentials
+- 📚 **Organized Endpoints**: Resources grouped by category (Assets, Assistance, Management, Administration)
+
+**Breaking Changes from 0.1.x:**
+- Requires GLPI 11+
+- OAuth2 authentication (no more session tokens)
+- Different API base URL (`/api.php/v2` instead of `/apirest.php`)
 
 ## Prerequisites
 
@@ -18,39 +35,51 @@ Before you begin using this node, ensure you have:
 
 1. **n8n installed**: You need n8n installed either locally or on a server. Visit [n8n.io](https://n8n.io) for installation instructions.
 
-2. **GLPI instance**: You need access to a GLPI installation (version 9.x or later recommended, version 10.1+ for best API support).
+2. **GLPI 11+ instance**: You need access to a GLPI 11.0 or later installation with the High-Level API enabled.
 
-3. **GLPI API enabled**: The REST API must be enabled in your GLPI instance:
-   - Go to Setup → General → API
-   - Enable the REST API
-   - Optionally create an API client and generate an App Token for additional security
-
-4. **GLPI user credentials**: You'll need valid GLPI user credentials with appropriate permissions for the operations you want to perform.
+3. **GLPI user credentials**: You'll need valid GLPI user credentials with appropriate permissions for the operations you want to perform.
 
 ## Installation
 
-### Install in n8n
+### Install in Self-Hosted n8n
 
-There are several ways to install this community node in your n8n instance:
+**Important**: This node is designed for **self-hosted n8n installations only**. It cannot be used with n8n Cloud due to dependency restrictions.
 
-#### Option 1: Install from npm (Recommended for production)
-
-Once published to npm, you can install it directly:
+#### For Production
 
 ```bash
-# Navigate to your n8n installation directory
-cd ~/.n8n
+# Navigate to your n8n custom nodes directory
+cd ~/.n8n/custom
 
 # Install the node
 npm install n8n-nodes-glpi
+
+# Restart n8n
 ```
 
-#### Option 2: Install from source (For development)
+#### For Docker
+
+```bash
+# Enter your n8n container
+docker exec -it <container-name> sh
+
+# Navigate to custom nodes directory
+cd /root/.n8n/custom
+
+# Install the node
+npm install n8n-nodes-glpi
+
+# Exit and restart container
+exit
+docker restart <container-name>
+```
+
+#### From Source (For Development)
 
 ```bash
 # Clone this repository
-git clone https://github.com/yourusername/n8n-nodes-glpi.git
-cd n8n-nodes-glpi
+git clone https://github.com/rodrigopg/n8n-openapi-glpi.git
+cd n8n-openapi-glpi
 
 # Install dependencies
 npm install
@@ -66,34 +95,7 @@ cd ~/.n8n
 npm link n8n-nodes-glpi
 ```
 
-#### Option 3: Install from GitHub
-
-```bash
-# Install directly from GitHub
-cd ~/.n8n
-npm install github:yourusername/n8n-nodes-glpi
-```
-
 After installation, restart your n8n instance, and the GLPI node will appear in the node palette.
-
-## Development Setup
-
-If you want to contribute to this node or customize it for your needs, here's how to set up the development environment:
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/n8n-nodes-glpi.git
-cd n8n-nodes-glpi
-
-# Install dependencies
-npm install
-
-# Build the node
-npm run build
-
-# For development with auto-rebuild on changes
-npm run dev
-```
 
 ## Configuration
 
@@ -103,16 +105,21 @@ npm run dev
 2. Select **GLPI API** from the list
 3. Configure the following fields:
 
-   - **GLPI URL**: Your GLPI instance URL (e.g., `https://glpi.example.com/glpi`)
-   - **Authentication Method**: Choose one of:
-     - **User Credentials**: Use username and password (most common)
-     - **User Token**: Use a pre-generated API token from your GLPI user preferences
-     - **Session Token**: Use an existing session token (for advanced scenarios)
-   - **Username**: Your GLPI username (if using User Credentials)
-   - **Password**: Your GLPI password (if using User Credentials)
-   - **App Token**: (Optional) Application token from GLPI API configuration for additional security
+   - **GLPI URL**: Your GLPI instance base URL (e.g., `http://localhost` or `https://glpi.example.com`)
+   - **Username**: Your GLPI username
+   - **Password**: Your GLPI password
+   - **Client ID**: (Optional) OAuth2 client ID if you've configured one
+   - **Client Secret**: (Optional) OAuth2 client secret
 
 4. Click **Create** to save the credentials
+
+### OAuth2 Authentication
+
+GLPI 11 uses OAuth2 for authentication. The node uses the **password grant** flow:
+
+- The username and password are used to obtain an OAuth2 access token
+- Tokens are automatically managed and refreshed by n8n
+- The `api` scope is requested by default for API access
 
 ### Testing Your Connection
 
@@ -120,100 +127,87 @@ After setting up credentials, you can test the connection by creating a simple w
 
 1. Add a GLPI node to your workflow
 2. Select your GLPI credentials
-3. Choose **Tickets** as the resource
-4. Choose **Get All** as the operation
+3. Choose a resource (e.g., **Computer** under Assets)
+4. Choose an operation (e.g., **Get All**)
 5. Execute the node
 
-If the connection is successful, you should see a list of tickets from your GLPI instance.
+If the connection is successful, you should see a list of resources from your GLPI instance.
 
-## Node Operations
+## Available Resources
 
-The GLPI node supports operations on various resources. Here's what you can do with each:
+The GLPI 11 High-Level API organizes resources by category. All resources and operations are automatically generated from the OpenAPI specification.
 
-### Tickets
+### Assets
+- **Computers**: Desktop and laptop management
+- **Monitors**: Display device tracking
+- **Network Equipment**: Routers, switches, firewalls
+- **Peripherals**: Printers, scanners, input devices
+- **Phones**: Mobile and VoIP phones
+- **And many more**: Cables, Racks, PDUs, Sensors, etc.
 
-Tickets are the core of GLPI's helpdesk functionality. You can:
+### Assistance (ITSM)
+- **Tickets**: Incident and request management
+- **Changes**: Change management workflow
+- **Problems**: Problem tracking and resolution
+- **Solutions**: Knowledge base solutions
 
-- **Create**: Create new support tickets with custom fields like title, description, priority, category, etc.
-- **Get**: Retrieve a specific ticket by ID to check its status or details
-- **Get All**: List all tickets with optional filtering and pagination
-- **Update**: Modify existing tickets (change status, assign to technicians, add solutions)
-- **Delete**: Remove tickets (with optional permanent deletion)
-- **Search**: Advanced search with multiple criteria
+### Management
+- **Budgets**: Budget planning and tracking
+- **Contacts**: Supplier and customer contacts
+- **Contracts**: Contract lifecycle management
+- **Documents**: Document repository
+- **Suppliers**: Vendor management
 
-### Computers
-
-Manage your IT assets and computer inventory:
-
-- **Create**: Add new computers to the inventory
-- **Get**: Retrieve details about a specific computer
-- **Get All**: List all computers in the system
-- **Update**: Update computer information (location, user, specifications)
-- **Delete**: Remove computers from inventory
-
-### Users
-
-Handle user management:
-
-- **Create**: Add new users to GLPI
-- **Get**: Retrieve user information
-- **Get All**: List all users
-- **Update**: Modify user details and permissions
-
-### Software
-
-Track software licenses and installations:
-
-- **Create**: Add new software entries
-- **Get All**: List software inventory
-- **Update**: Modify software information
-
-### Documents
-
-Manage documentation and file attachments:
-
-- **Upload**: Upload documents to GLPI
-- **Get All**: List available documents
+### Administration
+- **Users**: User account management
+- **Groups**: Group and team organization
+- **Entities**: Multi-entity support
+- **Profiles**: Permission and role management
 
 ## Example Workflows
 
-### Example 1: Create Ticket from Email
+### Example 1: Create Ticket from Webhook
 
-This workflow monitors an email inbox and creates GLPI tickets automatically:
+This workflow creates GLPI tickets automatically from webhook events:
 
 ```json
 {
-  "name": "Email to GLPI Ticket",
+  "name": "Webhook to GLPI Ticket",
   "nodes": [
     {
-      "name": "Email Trigger",
-      "type": "n8n-nodes-base.emailReadImap",
-      "position": [250, 300]
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "path": "glpi-ticket",
+        "responseMode": "onReceived"
+      }
     },
     {
       "name": "GLPI",
-      "type": "n8n-nodes-glpi.Glpi",
+      "type": "n8n-nodes-glpi.glpi",
       "position": [450, 300],
       "parameters": {
         "resource": "Ticket",
         "operation": "create",
-        "name": "={{$node[\"Email Trigger\"].json[\"subject\"]}}",
-        "content": "={{$node[\"Email Trigger\"].json[\"text\"]}}",
-        "urgency": 3,
-        "impact": 3
+        "name": "={{$node[\"Webhook\"].json[\"title\"]}}",
+        "content": "={{$node[\"Webhook\"].json[\"description\"]}}"
+      },
+      "credentials": {
+        "glpiApi": "GLPI API Credentials"
       }
     }
   ]
 }
 ```
 
-### Example 2: Daily Ticket Report
+### Example 2: List All Computers
 
-Generate a daily report of all open tickets:
+Get all computers from your GLPI inventory:
 
 ```json
 {
-  "name": "Daily GLPI Report",
+  "name": "List GLPI Computers",
   "nodes": [
     {
       "name": "Schedule",
@@ -225,44 +219,66 @@ Generate a daily report of all open tickets:
       }
     },
     {
-      "name": "Get Open Tickets",
-      "type": "n8n-nodes-glpi.Glpi",
+      "name": "Get Computers",
+      "type": "n8n-nodes-glpi.glpi",
       "parameters": {
-        "resource": "Ticket",
-        "operation": "search",
-        "searchCriteria": {
-          "criteria[0][field]": "12",
-          "criteria[0][searchtype]": "equals",
-          "criteria[0][value]": "2"
-        }
+        "resource": "Assets/Computer",
+        "operation": "getAll"
+      },
+      "credentials": {
+        "glpiApi": "GLPI API Credentials"
       }
     }
   ]
 }
 ```
 
+## API Documentation
+
+### Base URL Structure
+
+All API requests use the base URL: `{your-glpi-url}/api.php/v2`
+
+For example:
+- `http://localhost/api.php/v2/Assets/Computer`
+- `https://glpi.example.com/api.php/v2/Assistance/Ticket`
+
+### OpenAPI Specification
+
+The complete API specification can be accessed from your GLPI instance:
+
+- **Documentation**: `{your-glpi-url}/api.php/v2/doc`
+- **OpenAPI JSON**: `{your-glpi-url}/api.php/doc.json`
+
+### Authentication Endpoints
+
+- **Token URL**: `/api.php/token` (OAuth2 password grant)
+- **Scopes**: `api`, `user`, `email`, `inventory`, `status`, `graphql`
+
 ## Troubleshooting
 
 ### Common Issues and Solutions
 
-**Issue: "Failed to initialize GLPI session"**
-- Check that your GLPI URL is correct and includes the path to GLPI (e.g., `/glpi`)
-- Verify that the REST API is enabled in GLPI settings
-- Ensure your credentials are correct
-- Check if your user has sufficient permissions
+**Issue: "Failed to authenticate"**
+- Verify your GLPI URL is correct (without `/api.php`)
+- Ensure your username and password are correct
+- Check that your user has API access permissions in GLPI
+- Verify GLPI 11+ is installed (this node doesn't work with GLPI 9/10)
 
-**Issue: "404 Not Found" errors**
-- Verify the GLPI URL doesn't have `/apirest.php` at the end (the node adds this automatically)
-- Check if the resource you're trying to access exists in your GLPI version
-
-**Issue: "Session Token expired"**
-- GLPI sessions expire after a period of inactivity
-- The node handles session initialization automatically, but you may need to re-authenticate
-
-**Issue: Node doesn't appear in n8n**
+**Issue: "Node doesn't appear in n8n"**
 - Restart n8n after installation
-- Check that the node is properly listed in package.json
-- Verify the build completed successfully with `npm run build`
+- Check that the node is properly installed with `npm list n8n-nodes-glpi`
+- Verify you're using a self-hosted n8n (not n8n Cloud)
+
+**Issue: "Resource not found"**
+- Check if the resource exists in your GLPI version
+- Some resources depend on enabled plugins
+- Verify the endpoint in the OpenAPI documentation
+
+**Issue: "Permission denied"**
+- Ensure your user has the necessary permissions in GLPI
+- Check entity restrictions
+- Verify profile rights for the specific resource
 
 ### Debug Mode
 
@@ -276,99 +292,123 @@ export N8N_LOG_LEVEL=debug
 n8n start
 ```
 
-## Advanced Usage
+## Architecture
 
-### Using with GLPI 10.1+ (Modern API)
+### OpenAPI-Driven Design
 
-GLPI 10.1 and later versions include a new modern API with built-in OpenAPI/Swagger support. If you're using GLPI 10.1+:
+This node uses an innovative approach:
 
-1. Access the Swagger UI at: `https://your-glpi.com/glpi/api.php/swagger`
-2. You can export the OpenAPI specification and update the `openapi.json` file in this node for the latest endpoints
-3. The modern API uses OAuth2 authentication, which provides better security
+1. **Dynamic Property Generation**: The `@devlikeapro/n8n-openapi-node` package reads the GLPI OpenAPI specification
+2. **Automatic Updates**: When GLPI updates its API, you can simply fetch the new OpenAPI spec
+3. **Complete Coverage**: All 112K+ lines of the OpenAPI spec are included, providing access to all GLPI resources
 
-### Customizing the OpenAPI Specification
+### OAuth2 Integration
 
-The node uses an OpenAPI specification file (`nodes/Glpi/openapi.json`) to generate its properties. You can customize this file to:
+Authentication is handled transparently:
 
-- Add new endpoints specific to your GLPI plugins
-- Modify field descriptions and defaults
-- Add custom validation rules
+- n8n's credential system manages OAuth2 tokens
+- Automatic token refresh
+- Secure credential storage
 
-After modifying the OpenAPI spec, rebuild the node:
+## Development
+
+### Development Setup
 
 ```bash
+# Clone the repository
+git clone https://github.com/rodrigopg/n8n-openapi-glpi.git
+cd n8n-openapi-glpi
+
+# Install dependencies
+npm install
+
+# Build the node
+npm run build
+
+# For development with auto-rebuild on changes
+npm run dev
+
+# Run linter
+npm run lint
+
+# Fix linting issues
+npm run lint:fix
+```
+
+### Updating the OpenAPI Specification
+
+To update the OpenAPI spec from your GLPI 11 instance:
+
+```bash
+# Fetch the latest spec
+curl http://your-glpi-url/api.php/doc.json | python3 -m json.tool > nodes/Glpi/openapi.json
+
+# Rebuild
 npm run build
 ```
 
-### Extending the Node
+### Development Helper Script
 
-You can extend this node to support additional GLPI features:
+The repository includes a helper script for common tasks:
 
-1. Edit `nodes/Glpi/openapi.json` to add new endpoints
-2. Modify `nodes/Glpi/Glpi.node.ts` to handle special logic
-3. Update `credentials/GlpiApi.credentials.ts` for new authentication methods
+```bash
+./dev-helper.sh
+```
 
-## API Rate Limiting
-
-Be aware of potential rate limiting on your GLPI instance:
-
-- GLPI doesn't have built-in rate limiting by default
-- Your web server or reverse proxy might impose limits
-- For bulk operations, consider using batch endpoints when available
-- Implement delays between requests in your workflows if needed
-
-## Security Best Practices
-
-1. **Use HTTPS**: Always use HTTPS for your GLPI instance to encrypt data in transit
-2. **App Tokens**: Use App Tokens for an additional layer of security
-3. **Minimal Permissions**: Create dedicated GLPI users with minimal required permissions
-4. **Rotate Credentials**: Regularly rotate API tokens and passwords
-5. **Audit Logs**: Monitor GLPI's event logs for unusual API activity
+Options include:
+- Build the node
+- Install in local n8n
+- Run development mode
+- Run linter / fix linting
+- Clean build files
+- Fetch OpenAPI spec from GLPI instance
 
 ## Contributing
 
 We welcome contributions to improve this node! Here's how you can help:
 
-1. **Report Issues**: If you find bugs, please [create an issue](https://github.com/yourusername/n8n-nodes-glpi/issues)
+1. **Report Issues**: If you find bugs, please [create an issue](https://github.com/rodrigopg/n8n-openapi-glpi/issues)
 2. **Suggest Features**: Have ideas for new features? Open a discussion
-3. **Submit Pull Requests**: 
+3. **Submit Pull Requests**:
    - Fork the repository
    - Create your feature branch (`git checkout -b feature/AmazingFeature`)
    - Commit your changes (`git commit -m 'Add some AmazingFeature'`)
    - Push to the branch (`git push origin feature/AmazingFeature`)
    - Open a Pull Request
 
-### Development Guidelines
-
-- Follow the existing code style
-- Add comments for complex logic
-- Update documentation for new features
-- Test your changes thoroughly
-- Ensure the build passes (`npm run build`)
-
 ## Resources
 
-- [GLPI Documentation](https://glpi-project.org/documentation/)
-- [GLPI API Documentation](https://github.com/glpi-project/glpi/blob/master/apirest.md)
+- [GLPI Website](https://glpi-project.org/)
+- [GLPI 11 High-Level API Documentation](https://glpi-developer-documentation.readthedocs.io/en/latest/devapi/hlapi/)
 - [n8n Documentation](https://docs.n8n.io)
 - [n8n Community Nodes](https://docs.n8n.io/integrations/community-nodes/)
 - [OpenAPI Specification](https://swagger.io/specification/)
 
+## Version History
+
+### 0.2.0 (Latest)
+- **BREAKING**: Upgraded to GLPI 11 High-Level API
+- OAuth2 authentication support
+- Updated OpenAPI specification (112K+ lines)
+- Simplified node implementation
+- Updated credentials for OAuth2
+- Package size: 164.7 KB (unpacked: 9.3 MB)
+
+### 0.1.2
+- Fixed OpenAPI specification loading
+- Package size: 107.7 KB (unpacked: 5.5 MB)
+
+### 0.1.1
+- Initial published version
+- GLPI 9/10 REST API support (legacy)
+
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
-
-## Changelog
-
-### Version 0.1.0 (Initial Release)
-- Basic CRUD operations for Tickets, Computers, and Users
-- Search functionality
-- Support for multiple authentication methods
-- OpenAPI-based property generation
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## Support
 
-- For issues with this node: [GitHub Issues](https://github.com/yourusername/n8n-nodes-glpi/issues)
+- For issues with this node: [GitHub Issues](https://github.com/rodrigopg/n8n-openapi-glpi/issues)
 - For GLPI questions: [GLPI Forums](https://forum.glpi-project.org/)
 - For n8n questions: [n8n Community](https://community.n8n.io)
 
