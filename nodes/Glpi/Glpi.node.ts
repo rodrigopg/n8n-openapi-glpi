@@ -54,7 +54,8 @@ export class Glpi implements INodeType {
       },
       baseURL: '={{$credentials.url}}/apirest.php',
     },
-    properties: properties, // Use the auto-generated properties from OpenAPI spec
+    properties: properties,
+		usableAsTool: true, // Use the auto-generated properties from OpenAPI spec
   };
 
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {

@@ -2,6 +2,7 @@ import {
 	ICredentialType,
 	INodeProperties,
 	IAuthenticateGeneric,
+	Icon,
 } from 'n8n-workflow';
 
 /**
@@ -12,6 +13,7 @@ export class GlpiApi implements ICredentialType {
 	name = 'glpiApi';
 	displayName = 'GLPI API';
 	documentationUrl = 'https://glpi-project.org/documentation/';
+	icon: Icon = { light: 'file:../icons/glpi_white.svg', dark: 'file:../icons/glpi_color.svg' };
 	properties: INodeProperties[] = [
 		{
 			displayName: 'GLPI URL',
