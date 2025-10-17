@@ -129,6 +129,25 @@ export class Glpi implements INodeType {
           // queryParameters might not exist for all operations
         }
 
+        // Debug logging
+        console.log('=== GLPI Node Debug Info ===');
+        console.log('Resource:', resource);
+        console.log('Operation:', operation);
+        console.log('Request Options:', JSON.stringify(requestOptions, null, 2));
+        console.log('Credential Type:', 'glpiOAuth2Api');
+
+        // Get credentials to debug
+        const credentials = await this.getCredentials('glpiOAuth2Api');
+        console.log('Credentials (without sensitive data):', {
+          glpiUrl: credentials.glpiUrl,
+          grantType: credentials.grantType,
+          clientId: credentials.clientId ? '***' : undefined,
+          clientSecret: credentials.clientSecret ? '***' : undefined,
+          accessTokenUrl: credentials.accessTokenUrl,
+          scope: credentials.scope,
+        });
+        console.log('=== End Debug Info ===');
+
         // Execute the request with OAuth2 authentication
         const response = await this.helpers.httpRequestWithAuthentication.call(
           this,
