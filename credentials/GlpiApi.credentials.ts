@@ -1,93 +1,66 @@
 import {
 	ICredentialType,
 	INodeProperties,
-	IAuthenticateGeneric,
-	ICredentialTestRequest,
 	Icon,
 } from 'n8n-workflow';
 
 /**
  * GLPI API Credentials for GLPI 11+
- * Supports OAuth2 authentication with the High-Level API
+ * Uses OAuth2 password grant authentication
  */
 export class GlpiApi implements ICredentialType {
 	name = 'glpiApi';
 	displayName = 'GLPI API';
 	documentationUrl = 'https://glpi-developer-documentation.readthedocs.io/en/latest/devapi/hlapi/';
 	icon: Icon = { light: 'file:../icons/glpi_white.svg', dark: 'file:../icons/glpi_color.svg' };
+	extends = ['oAuth2Api'];
 	properties: INodeProperties[] = [
 		{
 			displayName: 'GLPI URL',
-			name: 'url',
+			name: 'glpiUrl',
 			type: 'string',
 			default: '',
 			placeholder: 'http://localhost',
-			description: 'The base URL of your GLPI installation (e.g., http://localhost or https://glpi.example.com)',
+			description: 'The base URL of your GLPI installation',
 			required: true,
 		},
 		{
-			displayName: 'Username',
-			name: 'username',
-			type: 'string',
-			default: '',
-			description: 'Your GLPI username',
+			displayName: 'Grant Type',
+			name: 'grantType',
+			type: 'hidden',
+			default: 'password',
+		},
+		{
+			displayName: 'Authorization URL',
+			name: 'authUrl',
+			type: 'hidden',
+			default: '={{$self["glpiUrl"]}}/api.php/authorize',
 			required: true,
 		},
 		{
-			displayName: 'Password',
-			name: 'password',
-			type: 'string',
-			typeOptions: {
-				password: true,
-			},
-			default: '',
-			description: 'Your GLPI password',
+			displayName: 'Access Token URL',
+			name: 'accessTokenUrl',
+			type: 'hidden',
+			default: '={{$self["glpiUrl"]}}/api.php/token',
 			required: true,
 		},
 		{
-			displayName: 'Client ID',
-			name: 'clientId',
-			type: 'string',
-			default: '',
-			placeholder: 'your-oauth-client-id',
-			description: 'OAuth2 Client ID (optional, leave empty for password grant)',
-			required: false,
+			displayName: 'Scope',
+			name: 'scope',
+			type: 'hidden',
+			default: 'email user api inventory status graphql',
 		},
 		{
-			displayName: 'Client Secret',
-			name: 'clientSecret',
-			type: 'string',
-			typeOptions: {
-				password: true,
-			},
+			displayName: 'Auth URI Query Parameters',
+			name: 'authQueryParameters',
+			type: 'hidden',
 			default: '',
-			description: 'OAuth2 Client Secret (optional)',
-			required: false,
+		},
+		{
+			displayName: 'Authentication',
+			name: 'authentication',
+			type: 'hidden',
+			default: 'header',
 		},
 	];
-
-	// This method is called by n8n to authenticate requests
-	// For GLPI 11, we use OAuth2 password grant
-	authenticate: IAuthenticateGeneric = {
-		type: 'generic',
-		properties: {
-			qs: {
-				grant_type: 'password',
-				username: '={{$credentials.username}}',
-				password: '={{$credentials.password}}',
-				client_id: '={{$credentials.clientId}}',
-				client_secret: '={{$credentials.clientSecret}}',
-				scope: 'api',
-			},
-		},
-	};
-
-	// Test method to verify the credentials work
-	test: ICredentialTestRequest = {
-		request: {
-			baseURL: '={{$credentials.url}}',
-			url: '/api.php/v2',
-			method: 'GET',
-		},
-	};
 }
