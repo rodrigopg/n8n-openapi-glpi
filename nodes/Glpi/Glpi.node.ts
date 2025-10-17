@@ -63,8 +63,7 @@ export class Glpi implements INodeType {
 
     for (let i = 0; i < items.length; i++) {
       try {
-        // Get the parameters from the OpenAPI-generated properties
-        const resource = this.getNodeParameter('resource', i) as string;
+        // Get the operation parameter from the OpenAPI-generated properties
         const operation = this.getNodeParameter('operation', i) as string;
 
         // Parse the operation ID to extract HTTP method and path
@@ -109,43 +108,8 @@ export class Glpi implements INodeType {
           // queryParameters might not exist for all operations
         }
 
-        // Debug logging
-        console.log('=== GLPI Node Debug Info ===');
-        console.log('Resource:', resource);
-        console.log('Operation:', operation);
-        console.log('Parsed Method:', method);
-        console.log('Parsed Path:', path);
-        console.log('Request Options:', JSON.stringify(requestOptions, null, 2));
-        console.log('Credential Type:', 'glpiOAuth2Api');
-
-        // Get credentials to debug
+        // Get credentials for OAuth2 authentication
         const credentials = await this.getCredentials('glpiOAuth2Api');
-        console.log('Credentials (without sensitive data):', {
-          glpiUrl: credentials.glpiUrl,
-          grantType: credentials.grantType,
-          clientId: credentials.clientId ? '***' : undefined,
-          clientSecret: credentials.clientSecret ? '***' : undefined,
-          username: credentials.username ? '***' : undefined,
-          password: credentials.password ? '***' : undefined,
-          accessTokenUrl: credentials.accessTokenUrl,
-          scope: credentials.scope,
-          authentication: credentials.authentication,
-          oauthTokenData: credentials.oauthTokenData ? '***' : undefined,
-        });
-        console.log('All credential keys:', Object.keys(credentials));
-
-        // Debug oauthTokenData structure
-        if (credentials.oauthTokenData) {
-          const tokenData = credentials.oauthTokenData as any;
-          console.log('OAuth Token Data structure:', {
-            hasAccessToken: !!tokenData.access_token,
-            hasRefreshToken: !!tokenData.refresh_token,
-            tokenType: tokenData.token_type,
-            expiresIn: tokenData.expires_in,
-            keys: Object.keys(tokenData),
-          });
-        }
-        console.log('=== End Debug Info ===');
 
         // Get or refresh OAuth2 token manually
         let accessToken = '';
@@ -157,14 +121,11 @@ export class Glpi implements INodeType {
           if (tokenData.expires_at > now) {
             // Token is still valid
             accessToken = tokenData.access_token;
-            console.log('Using cached access token');
           }
         }
 
         // If no valid token, get a new one
         if (!accessToken) {
-          console.log('Requesting new access token from:', credentials.accessTokenUrl);
-
           try {
             const tokenResponse = await this.helpers.request({
               method: 'POST',
@@ -182,18 +143,11 @@ export class Glpi implements INodeType {
               json: true,
             });
 
-            console.log('Token response received:', {
-              hasAccessToken: !!tokenResponse.access_token,
-              tokenType: tokenResponse.token_type,
-              expiresIn: tokenResponse.expires_in,
-            });
-
             accessToken = tokenResponse.access_token;
 
-            // TODO: Save token back to credentials
+            // TODO: Save token back to credentials for caching
             // This would require updating the credential, which is complex
           } catch (error) {
-            console.error('Failed to get access token:', error);
             throw new Error(`OAuth2 token request failed: ${error instanceof Error ? error.message : String(error)}`);
           }
         }
@@ -204,8 +158,6 @@ export class Glpi implements INodeType {
         // Build full URL
         const fullUrl = `${credentials.glpiUrl}/api.php${path}`;
         requestOptions.url = fullUrl;
-
-        console.log('Making authenticated request to:', fullUrl);
 
         // Execute the request with the access token
         const response = await this.helpers.request(requestOptions);
