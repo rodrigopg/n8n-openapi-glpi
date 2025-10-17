@@ -31,6 +31,25 @@ export class GlpiOAuth2Api implements ICredentialType {
 			default: 'password',
 		},
 		{
+			displayName: 'Username',
+			name: 'username',
+			type: 'string',
+			default: '',
+			description: 'GLPI username for OAuth2 password grant',
+			required: true,
+		},
+		{
+			displayName: 'Password',
+			name: 'password',
+			type: 'string',
+			typeOptions: {
+				password: true,
+			},
+			default: '',
+			description: 'GLPI password for OAuth2 password grant',
+			required: true,
+		},
+		{
 			displayName: 'Authorization URL',
 			name: 'authUrl',
 			type: 'hidden',
