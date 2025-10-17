@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-glpi",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "n8n node for GLPI - IT Asset Management and Helpdesk System",
 	"license": "MIT",
 	"homepage": "https://github.com/rodrigopg/n8n-openapi-glpi",
@@ -27,8 +27,7 @@
 		"dev": "n8n-node dev",
 		"lint": "n8n-node lint",
 		"lint:fix": "n8n-node lint --fix",
-		"release": "n8n-node release",
-		"prepublishOnly": "n8n-node prerelease"
+		"release": "n8n-node release"
 	},
 	"files": [
 		"dist"
