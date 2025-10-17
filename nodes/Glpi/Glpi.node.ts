@@ -133,6 +133,18 @@ export class Glpi implements INodeType {
           oauthTokenData: credentials.oauthTokenData ? '***' : undefined,
         });
         console.log('All credential keys:', Object.keys(credentials));
+
+        // Debug oauthTokenData structure
+        if (credentials.oauthTokenData) {
+          const tokenData = credentials.oauthTokenData as any;
+          console.log('OAuth Token Data structure:', {
+            hasAccessToken: !!tokenData.access_token,
+            hasRefreshToken: !!tokenData.refresh_token,
+            tokenType: tokenData.token_type,
+            expiresIn: tokenData.expires_in,
+            keys: Object.keys(tokenData),
+          });
+        }
         console.log('=== End Debug Info ===');
 
         // Execute the request with OAuth2 authentication
