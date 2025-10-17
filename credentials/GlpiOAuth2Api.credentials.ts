@@ -8,9 +8,9 @@ import {
  * GLPI API Credentials for GLPI 11+
  * Uses OAuth2 password grant authentication
  */
-export class GlpiApi implements ICredentialType {
-	name = 'glpiApi';
-	displayName = 'GLPI API';
+export class GlpiOAuth2Api implements ICredentialType {
+	name = 'glpiOAuth2Api';
+	displayName = 'GLPI OAuth2 API';
 	documentationUrl = 'https://glpi-developer-documentation.readthedocs.io/en/latest/devapi/hlapi/';
 	icon: Icon = { light: 'file:../icons/glpi_white.svg', dark: 'file:../icons/glpi_color.svg' };
 	extends = ['oAuth2Api'];

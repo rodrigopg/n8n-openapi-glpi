@@ -19,7 +19,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/rodrigopg/n8n-openapi-glpi.git"
+		"url": "git+https://github.com/rodrigopg/n8n-openapi-glpi.git"
 	},
 	"scripts": {
 		"build": "n8n-node build",
@@ -36,7 +36,7 @@
 		"n8nNodesApiVersion": 1,
 		"strict": false,
 		"credentials": [
-			"dist/credentials/GlpiApi.credentials.js"
+			"dist/credentials/GlpiOAuth2Api.credentials.js"
 		],
 		"nodes": [
 			"dist/nodes/Glpi/Glpi.node.js"

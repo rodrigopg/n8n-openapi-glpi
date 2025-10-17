@@ -42,7 +42,7 @@ export class Glpi implements INodeType {
     outputs: ['main'],
     credentials: [
       {
-        name: 'glpiApi',
+        name: 'glpiOAuth2Api',
         required: true,
       },
     ],
@@ -60,7 +60,6 @@ export class Glpi implements INodeType {
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
-    const credentials = await this.getCredentials('glpiApi');
 
     for (let i = 0; i < items.length; i++) {
       try {
@@ -69,9 +68,10 @@ export class Glpi implements INodeType {
         const operation = this.getNodeParameter('operation', i) as string;
 
         // Build the request options
+        // Note: url is just the path, baseURL is set in requestDefaults
         const requestOptions: IHttpRequestOptions = {
           method: 'GET',
-          url: `${credentials.glpiUrl}/api.php${resource}`,
+          url: resource,
           headers: {
             'Accept': 'application/json',
           },
@@ -88,7 +88,7 @@ export class Glpi implements INodeType {
             if (Object.keys(bodyParameters).length > 0) {
               requestOptions.body = bodyParameters;
             }
-          } catch (error) {
+          } catch {
             // requestBody parameter might not exist for all operations
           }
         } else if (operation.includes('update') || operation.includes('patch') || operation === 'PATCH') {
@@ -100,7 +100,7 @@ export class Glpi implements INodeType {
             if (Object.keys(bodyParameters).length > 0) {
               requestOptions.body = bodyParameters;
             }
-          } catch (error) {
+          } catch {
             // requestBody parameter might not exist
           }
         } else if (operation.includes('delete') || operation === 'DELETE') {
@@ -114,7 +114,7 @@ export class Glpi implements INodeType {
             if (Object.keys(bodyParameters).length > 0) {
               requestOptions.body = bodyParameters;
             }
-          } catch (error) {
+          } catch {
             // requestBody parameter might not exist
           }
         }
@@ -125,14 +125,14 @@ export class Glpi implements INodeType {
           if (Object.keys(queryParameters).length > 0) {
             requestOptions.qs = queryParameters;
           }
-        } catch (error) {
+        } catch {
           // queryParameters might not exist for all operations
         }
 
         // Execute the request with OAuth2 authentication
         const response = await this.helpers.httpRequestWithAuthentication.call(
           this,
-          'glpiApi',
+          'glpiOAuth2Api',
           requestOptions,
         );
 
