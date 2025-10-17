@@ -6,7 +6,8 @@
       "Bash(npm run build)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(npx release-it:*)"
+      "Bash(npx release-it:*)",
+      "WebFetch(domain:www.npmjs.com)"
     ],
     "deny": [],
     "ask": []
