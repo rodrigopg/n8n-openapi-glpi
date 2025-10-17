@@ -125,9 +125,14 @@ export class Glpi implements INodeType {
           grantType: credentials.grantType,
           clientId: credentials.clientId ? '***' : undefined,
           clientSecret: credentials.clientSecret ? '***' : undefined,
+          username: credentials.username ? '***' : undefined,
+          password: credentials.password ? '***' : undefined,
           accessTokenUrl: credentials.accessTokenUrl,
           scope: credentials.scope,
+          authentication: credentials.authentication,
+          oauthTokenData: credentials.oauthTokenData ? '***' : undefined,
         });
+        console.log('All credential keys:', Object.keys(credentials));
         console.log('=== End Debug Info ===');
 
         // Execute the request with OAuth2 authentication

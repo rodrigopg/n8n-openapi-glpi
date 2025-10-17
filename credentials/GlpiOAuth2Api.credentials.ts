@@ -60,7 +60,13 @@ export class GlpiOAuth2Api implements ICredentialType {
 			displayName: 'Authentication',
 			name: 'authentication',
 			type: 'hidden',
-			default: 'header',
+			default: 'body',
+		},
+		{
+			displayName: 'Ignore SSL Issues',
+			name: 'ignoreSSLIssues',
+			type: 'hidden',
+			default: false,
 		},
 	];
 }
