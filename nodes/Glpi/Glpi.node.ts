@@ -5,8 +5,14 @@ import {
   INodeExecutionData,
   IHttpRequestOptions,
   IDataObject,
+  NodeOperationError,
 } from 'n8n-workflow';
-import { N8NPropertiesBuilder, N8NPropertiesBuilderConfig } from '@devlikeapro/n8n-openapi-node';
+import {
+  N8NPropertiesBuilder,
+  N8NPropertiesBuilderConfig,
+  DefaultOperationParser,
+  OperationContext,
+} from '@devlikeapro/n8n-openapi-node';
 import * as doc from './openapi.json';
 
 /**
@@ -15,9 +21,17 @@ import * as doc from './openapi.json';
  * IT Asset Management and Helpdesk System
  */
 
+// Ensure option values match the displayed operation names so displayOptions work correctly
+class OperationParser extends DefaultOperationParser {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value(operation: any, context: OperationContext): string {
+    return this.name(operation, context);
+  }
+}
+
 // Configuration for the OpenAPI properties builder
 const config: N8NPropertiesBuilderConfig = {
-  // We can add custom configuration here if needed
+  operation: new OperationParser(),
 };
 
 // Create the properties builder instance with our OpenAPI document
@@ -113,6 +127,7 @@ export class Glpi implements INodeType {
 
         // Get or refresh OAuth2 token manually
         let accessToken = '';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const tokenData = credentials.oauthTokenData as any;
 
         // Check if we have a valid token
@@ -152,7 +167,7 @@ export class Glpi implements INodeType {
             // This would require updating the credential, which is complex
           } catch (error) {
             const errorMessage = `OAuth2 token request failed: ${error instanceof Error ? error.message : String(error)}`;
-            throw new Error(errorMessage);
+            throw new NodeOperationError(this.getNode(), errorMessage);
           }
         }
 
