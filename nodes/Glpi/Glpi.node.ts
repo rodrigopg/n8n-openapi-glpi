@@ -85,7 +85,20 @@ export class Glpi implements INodeType {
         const operationParts = operation.split(' ');
         const method = operationParts[0] as string;
         const pathPart = operationParts[1]?.replace(/^-/, '') || '';
-        const path = '/' + pathPart.replace(/-/g, '/');
+        let path = '/' + pathPart.replace(/-/g, '/');
+
+        // Replace path parameters (e.g., {id}, {name}) with actual values
+        const pathParamRegex = /\{([^}]+)\}/g;
+        let match;
+        while ((match = pathParamRegex.exec(path)) !== null) {
+          const paramName = match[1];
+          try {
+            const paramValue = this.getNodeParameter(paramName, i) as string;
+            path = path.replace(`{${paramName}}`, encodeURIComponent(paramValue));
+          } catch {
+            // Parameter not found, leave as is
+          }
+        }
 
         // Build the request options
         // Note: url is just the path, baseURL is set in requestDefaults
@@ -120,6 +133,19 @@ export class Glpi implements INodeType {
           }
         } catch {
           // queryParameters might not exist for all operations
+        }
+
+        // Add header parameters from OpenAPI spec (GLPI-specific headers)
+        const headerParams = ['Accept-Language', 'GLPI-Entity', 'GLPI-Profile', 'GLPI-Entity-Recursive'];
+        for (const headerName of headerParams) {
+          try {
+            const headerValue = this.getNodeParameter(headerName, i);
+            if (headerValue !== undefined && headerValue !== null && headerValue !== '') {
+              requestOptions.headers![headerName] = String(headerValue);
+            }
+          } catch {
+            // Header parameter doesn't exist for this operation
+          }
         }
 
         // Get credentials for OAuth2 authentication
